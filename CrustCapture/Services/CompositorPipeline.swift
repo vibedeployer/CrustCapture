@@ -114,6 +114,16 @@ class CompositorPipeline {
             )
         }
 
+        // Step 7: CRT effect
+        if settings.crt.enabled {
+            composited = applyCRT(
+                to: composited,
+                settings: settings.crt,
+                contentRect: CGRect(x: offsetX, y: offsetY, width: scaledWidth, height: scaledHeight),
+                outputSize: outputSize
+            )
+        }
+
         return composited.cropped(to: CGRect(origin: .zero, size: outputSize))
     }
 
@@ -235,6 +245,90 @@ class CompositorPipeline {
             ])
 
         return highlight.composited(over: image)
+    }
+
+    // MARK: - CRT Effect
+
+    private func applyCRT(
+        to image: CIImage,
+        settings: CRTSettings,
+        contentRect: CGRect,
+        outputSize: CGSize
+    ) -> CIImage {
+        var result = image
+        let rect = CGRect(origin: .zero, size: outputSize)
+
+        // 1. Barrel distortion (screen curvature)
+        if settings.curvature > 0 {
+            let center = CIVector(x: outputSize.width / 2, y: outputSize.height / 2)
+            result = result.applyingFilter("CIBumpDistortion", parameters: [
+                kCIInputCenterKey: center,
+                kCIInputRadiusKey: max(outputSize.width, outputSize.height) * 0.8,
+                kCIInputScaleKey: -settings.curvature * 0.15
+            ]).cropped(to: rect)
+        }
+
+        // 2. RGB chromatic aberration (offset R and B channels)
+        if settings.rgbOffset > 0 {
+            let offset = settings.rgbOffset
+
+            // Shift red channel left, blue channel right
+            let redShifted = result
+                .transformed(by: CGAffineTransform(translationX: -offset, y: 0))
+                .cropped(to: rect)
+            let blueShifted = result
+                .transformed(by: CGAffineTransform(translationX: offset, y: 0))
+                .cropped(to: rect)
+
+            // Extract channels using color matrix
+            let redOnly = redShifted.applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: 1, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+            ])
+            let greenOnly = result.applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: 1, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+            ])
+            let blueOnly = blueShifted.applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: 1, w: 0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+            ])
+
+            result = redOnly
+                .applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: greenOnly])
+                .applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: blueOnly])
+                .cropped(to: rect)
+        }
+
+        // 3. Scanlines
+        if settings.scanlineIntensity > 0 {
+            let lineHeight: CGFloat = 2.0
+            let scanlines = CIFilter(name: "CIStripesGenerator", parameters: [
+                "inputCenter": CIVector(x: 0, y: 0),
+                "inputColor0": CIColor(red: 0, green: 0, blue: 0, alpha: settings.scanlineIntensity),
+                "inputColor1": CIColor(red: 0, green: 0, blue: 0, alpha: 0),
+                "inputWidth": lineHeight,
+                "inputSharpness": 1.0 as CGFloat
+            ])!.outputImage!.cropped(to: rect)
+
+            result = scanlines.composited(over: result).cropped(to: rect)
+        }
+
+        // 4. Vignette (darken edges)
+        if settings.vignette > 0 {
+            result = result.applyingFilter("CIVignette", parameters: [
+                kCIInputIntensityKey: settings.vignette * 2.0,
+                kCIInputRadiusKey: max(outputSize.width, outputSize.height) * 0.5
+            ])
+        }
+
+        return result.cropped(to: rect)
     }
 
     /// Render a CIImage to a CVPixelBuffer for writing

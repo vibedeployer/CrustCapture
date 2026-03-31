@@ -77,7 +77,47 @@ struct InspectorView: View {
                     }
                 }
 
-                Spacer()
+                Divider()
+
+                // CRT Effect section
+                inspectorSection("CRT Effect") {
+                    Toggle("Enable CRT", isOn: Binding(
+                        get: { settings.crt.enabled },
+                        set: { settings.crt.enabled = $0; onSettingsChanged() }
+                    ))
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+
+                    if settings.crt.enabled {
+                        sliderRow("Scanlines", value: Binding(
+                            get: { settings.crt.scanlineIntensity },
+                            set: { settings.crt.scanlineIntensity = $0 }
+                        ), range: 0...0.8, onChange: onSettingsChanged)
+
+                        sliderRow("Curvature", value: Binding(
+                            get: { settings.crt.curvature },
+                            set: { settings.crt.curvature = $0 }
+                        ), range: 0...1.0, onChange: onSettingsChanged)
+
+                        sliderRow("RGB Offset", value: Binding(
+                            get: { settings.crt.rgbOffset },
+                            set: { settings.crt.rgbOffset = $0 }
+                        ), range: 0...5.0, onChange: onSettingsChanged)
+
+                        sliderRow("Vignette", value: Binding(
+                            get: { settings.crt.vignette },
+                            set: { settings.crt.vignette = $0 }
+                        ), range: 0...1.0, onChange: onSettingsChanged)
+
+                        Toggle("Flicker", isOn: Binding(
+                            get: { settings.crt.flicker },
+                            set: { settings.crt.flicker = $0; onSettingsChanged() }
+                        ))
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                    }
+                }
+
             }
             .padding(16)
         }

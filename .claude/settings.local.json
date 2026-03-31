@@ -6,7 +6,13 @@
       "Bash(open /Users/vibedeploy/Library/Developer/Xcode/DerivedData/CrustCapture-eprutvrvvmpivpbbwxqoqizrgmml/Build/Products/Debug/CrustCapture.app)",
       "Bash(tccutil reset:*)",
       "Bash(rm -f ~/Movies/CrustCapture/export.log)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(pkill -9 CrustCapture)",
+      "Bash(rm -rf /Users/vibedeploy/Library/Developer/Xcode/DerivedData/CrustCapture-eprutvrvvmpivpbbwxqoqizrgmml)",
+      "Bash(rm -rf /Applications/CrustCapture.app)",
+      "Bash(cp -R /Users/vibedeploy/Library/Developer/Xcode/DerivedData/CrustCapture-eprutvrvvmpivpbbwxqoqizrgmml/Build/Products/Debug/CrustCapture.app /Applications/CrustCapture.app)",
+      "Bash(open /Applications/CrustCapture.app)",
+      "Bash(cp -R /Users/vibedeploy/Library/Developer/Xcode/DerivedData/CrustCapture-*/Build/Products/Debug/CrustCapture.app /Applications/CrustCapture.app)"
     ]
   }
 }

@@ -2,12 +2,14 @@ import SwiftUI
 
 @main
 struct CrustCaptureApp: App {
+    static let buildVersion = "1.1.0"
+
     @StateObject private var appState = AppState()
     @StateObject private var recordingViewModel = RecordingViewModel()
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup("CrustCapture v\(Self.buildVersion)") {
             ContentView()
                 .environmentObject(appState)
                 .environmentObject(recordingViewModel)

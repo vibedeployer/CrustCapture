@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrustCapture — Screen Recording That Looks Good</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --border: #1e1e2e;
+            --text: #e8e8ed;
+            --muted: #8888a0;
+            --accent: #f0c040;
+            --accent-dim: rgba(240, 192, 64, 0.15);
+            --gradient-start: #1a1a3a;
+            --gradient-end: #2a5a8a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Nav */
+        nav {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .logo span { color: var(--accent); }
+        nav a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+        nav a:hover { color: var(--text); }
+        .nav-links { display: flex; gap: 24px; }
+
+        /* Hero */
+        .hero {
+            padding: 100px 0 80px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: clamp(40px, 6vw, 64px);
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--accent), #ff8844);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            font-size: 18px;
+            color: var(--muted);
+            max-width: 520px;
+            margin: 0 auto 40px;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #0a0a0f;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 30px rgba(240, 192, 64, 0.3);
+        }
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            border-color: var(--muted);
+            transform: translateY(-1px);
+        }
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            background: var(--accent-dim);
+            margin-bottom: 20px;
+        }
+
+        /* Preview mockup */
+        .preview {
+            margin: 60px auto 0;
+            max-width: 800px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            aspect-ratio: 16 / 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .preview-window {
+            width: 70%;
+            aspect-ratio: 16 / 10;
+            background: #1a1a2e;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        .preview-titlebar {
+            height: 28px;
+            background: #252538;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 6px;
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot-red { background: #ff5f57; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #28c840; }
+        .preview-content {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .preview-line {
+            height: 8px;
+            border-radius: 4px;
+            background: #2a2a44;
+        }
+        .zoom-circle {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            bottom: 25%;
+            right: 20%;
+            animation: pulse 2s ease-in-out infinite;
+            opacity: 0.7;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.15); opacity: 0.9; }
+        }
+
+        /* Features */
+        .features {
+            padding: 100px 0;
+        }
+        .features h2 {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .features .subtitle {
+            text-align: center;
+            color: var(--muted);
+            margin-bottom: 60px;
+            font-size: 16px;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            transition: border-color 0.2s;
+        }
+        .feature-card:hover {
+            border-color: #2e2e44;
+        }
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 14px;
+            display: block;
+        }
+        .feature-card h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .feature-card p {
+            font-size: 14px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* How it works */
+        .how-it-works {
+            padding: 80px 0;
+            border-top: 1px solid var(--border);
+        }
+        .how-it-works h2 {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            text-align: center;
+        }
+        .step-number {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--accent-dim);
+            color: var(--accent);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+        .steps h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .steps p {
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        /* Tech */
+        .tech {
+            padding: 80px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        .tech h2 {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+        }
+        .tech .subtitle {
+            color: var(--muted);
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+        .tech-pills {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .pill {
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* CTA */
+        .cta {
+            padding: 100px 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+        .cta h2 {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+        .cta p {
+            color: var(--muted);
+            margin-bottom: 32px;
+            font-size: 16px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 30px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        footer a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+        footer a:hover { color: var(--text); }
+
+        @media (max-width: 640px) {
+            .steps { grid-template-columns: 1fr; gap: 32px; }
+            .hero { padding: 60px 0 40px; }
+            .features { padding: 60px 0; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <div class="logo">Crust<span>Capture</span></div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how">How It Works</a>
+                <a href="https://github.com/vibedeployer/CrustCapture">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="container">
+            <div class="badge">macOS native &middot; free &middot; open source</div>
+            <h1>Screen recordings<br>that <span class="highlight">look good</span></h1>
+            <p>Auto zoom on clicks. Cursor highlights. CRT effects. Beautiful backgrounds. Record your screen and export something you're actually proud to share.</p>
+            <div class="hero-buttons">
+                <a href="https://github.com/vibedeployer/CrustCapture/releases" class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12l-4.5-4.5 1.06-1.06L7.5 9.38V1h1v8.38l2.94-2.94 1.06 1.06L8 12zm-6 2h12v1H2v-1z"/></svg>
+                    Download DMG
+                </a>
+                <a href="https://github.com/vibedeployer/CrustCapture" class="btn btn-secondary">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                    View Source
+                </a>
+            </div>
+
+            <div class="preview">
+                <div class="preview-window">
+                    <div class="preview-titlebar">
+                        <div class="dot dot-red"></div>
+                        <div class="dot dot-yellow"></div>
+                        <div class="dot dot-green"></div>
+                    </div>
+                    <div class="preview-content">
+                        <div class="preview-line" style="width: 60%"></div>
+                        <div class="preview-line" style="width: 80%"></div>
+                        <div class="preview-line" style="width: 45%"></div>
+                        <div class="preview-line" style="width: 70%"></div>
+                        <div class="preview-line" style="width: 55%"></div>
+                    </div>
+                    <div class="zoom-circle"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="container">
+            <h2>Everything your recording needs</h2>
+            <p class="subtitle">No subscriptions. No watermarks. Just a fast native app that does the job.</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">&#x1F50D;</span>
+                    <h3>Auto Zoom on Click</h3>
+                    <p>Automatically zooms into wherever you click, stays zoomed during rapid interactions, and smoothly pans between locations. Looks cinematic with zero effort.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">&#x1F5B1;</span>
+                    <h3>Cursor Highlights</h3>
+                    <p>Configurable cursor glow with click pulse animation. Your viewers always know exactly where to look. Customize color, size, and opacity.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">&#x1F4FA;</span>
+                    <h3>CRT Effect</h3>
+                    <p>Scanlines, barrel distortion, chromatic aberration, and vignette. Give your recordings a retro CRT monitor look when you want that extra vibe.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">&#x1F3A8;</span>
+                    <h3>15+ Backgrounds</h3>
+                    <p>Beautiful gradient presets like Ocean, Sunset, and Purple Haze. Or use the custom picker to match your brand. Rounded corners and shadows included.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">&#x2702;</span>
+                    <h3>Trim & Edit</h3>
+                    <p>Timeline with thumbnail strip and drag handles. Trim the start and end, scrub through with live preview. Undo and redo everything.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">&#x1F680;</span>
+                    <h3>Fast Export</h3>
+                    <p>MP4 with H.264 or HEVC, or export as GIF. Pick your resolution (1080p, 1440p, original) and quality. GPU-accelerated with Metal.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works" id="how">
+        <div class="container">
+            <h2>Three steps. That's it.</h2>
+            <div class="steps">
+                <div>
+                    <div class="step-number">1</div>
+                    <h3>Pick a source</h3>
+                    <p>Choose a screen or specific window. Toggle audio capture. Hit record.</p>
+                </div>
+                <div>
+                    <div class="step-number">2</div>
+                    <h3>Tweak the look</h3>
+                    <p>Adjust background, zoom level, cursor style, and effects in the live editor.</p>
+                </div>
+                <div>
+                    <div class="step-number">3</div>
+                    <h3>Export & share</h3>
+                    <p>Pick your format and resolution. Export. Post it everywhere.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="tech">
+        <div class="container">
+            <h2>Built native</h2>
+            <p class="subtitle">No Electron. No web views. Pure Swift and Metal on macOS.</p>
+            <div class="tech-pills">
+                <div class="pill">SwiftUI</div>
+                <div class="pill">ScreenCaptureKit</div>
+                <div class="pill">AVFoundation</div>
+                <div class="pill">Core Image</div>
+                <div class="pill">Metal GPU</div>
+                <div class="pill">macOS 14+</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <div class="container">
+            <h2>Stop posting ugly recordings</h2>
+            <p>Free, open source, and built for people who care how things look.</p>
+            <div class="hero-buttons">
+                <a href="https://github.com/vibedeployer/CrustCapture/releases" class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12l-4.5-4.5 1.06-1.06L7.5 9.38V1h1v8.38l2.94-2.94 1.06 1.06L8 12zm-6 2h12v1H2v-1z"/></svg>
+                    Download for macOS
+                </a>
+                <a href="https://github.com/vibedeployer/CrustCapture" class="btn btn-secondary">
+                    Star on GitHub
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>Built by <a href="https://github.com/vibedeployer">vibedeploy</a> &middot; <a href="https://github.com/vibedeployer/CrustCapture/blob/main/LICENSE">MIT License</a></p>
+        </div>
+    </footer>
+</body>
+</html>

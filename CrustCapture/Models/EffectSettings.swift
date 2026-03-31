@@ -32,6 +32,15 @@ struct CursorStyle: Equatable {
     var clickPulseEnabled: Bool = true
 }
 
+struct CRTSettings: Equatable {
+    var enabled: Bool = false
+    var scanlineIntensity: CGFloat = 0.3  // 0-1 how visible scanlines are
+    var curvature: CGFloat = 0.3          // 0-1 barrel distortion amount
+    var rgbOffset: CGFloat = 1.5          // pixels of chromatic aberration
+    var vignette: CGFloat = 0.4           // 0-1 edge darkening
+    var flicker: Bool = true              // subtle brightness variation
+}
+
 struct EffectSettings: Equatable {
     var background: BackgroundStyle = .gradient(
         Color(red: 0.1, green: 0.1, blue: 0.3),
@@ -44,5 +53,6 @@ struct EffectSettings: Equatable {
     var padding: CGFloat = 40
     var cursorStyle: CursorStyle = CursorStyle()
     var autoZoomEnabled: Bool = true
-    var autoZoomScale: CGFloat = 2.0 // how much to zoom in on clicks
+    var autoZoomScale: CGFloat = 2.0
+    var crt: CRTSettings = CRTSettings()
 }
