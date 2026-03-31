@@ -10,29 +10,30 @@ struct ZoomKeyframe {
 
 class AutoZoomAnalyzer {
     /// Analyzes cursor click events and generates smooth zoom keyframes.
-    /// Creates a zoom-in before each click cluster and zoom-out afterward.
+    /// Stays zoomed in as long as clicking continues in the same area.
     static func generateKeyframes(
         from events: [CursorEvent],
         zoomScale: CGFloat = 2.0,
-        holdDuration: Double = 1.5,
-        transitionDuration: Double = 0.4
+        holdDuration: Double = 2.5,
+        transitionDuration: Double = 0.5
     ) -> [ZoomKeyframe] {
         let clicks = events.filter { $0.isClick }
         guard !clicks.isEmpty else { return [] }
 
-        // Cluster clicks that are close in time and space
-        let clusters = clusterClicks(clicks, timeThreshold: 0.8, distanceThreshold: 0.15)
+        // Cluster clicks with generous thresholds — keep rapid clicks in the same cluster
+        let clusters = clusterClicks(clicks, timeThreshold: 2.0, distanceThreshold: 0.25)
 
         var keyframes: [ZoomKeyframe] = []
 
         for cluster in clusters {
             let centroid = clusterCentroid(cluster)
-            let clusterTime = cluster.first!.timestamp
+            let firstClick = cluster.first!.timestamp
+            let lastClick = cluster.last!.timestamp
 
-            // Ease in: start zooming before the click
-            let zoomInStart = max(0, clusterTime - transitionDuration)
+            // Ease in: start zooming before the first click
+            let zoomInStart = max(0, firstClick - transitionDuration)
 
-            // At rest (no zoom) just before transition
+            // At rest just before transition
             keyframes.append(ZoomKeyframe(
                 timestamp: zoomInStart,
                 centerX: centroid.x,
@@ -40,16 +41,16 @@ class AutoZoomAnalyzer {
                 scale: 1.0
             ))
 
-            // Fully zoomed at click time
+            // Fully zoomed at first click
             keyframes.append(ZoomKeyframe(
-                timestamp: clusterTime,
+                timestamp: firstClick,
                 centerX: centroid.x,
                 centerY: centroid.y,
                 scale: zoomScale
             ))
 
-            // Hold zoom
-            let holdEnd = clusterTime + holdDuration
+            // Stay zoomed through the entire cluster + hold duration after last click
+            let holdEnd = lastClick + holdDuration
 
             keyframes.append(ZoomKeyframe(
                 timestamp: holdEnd,
@@ -67,25 +68,16 @@ class AutoZoomAnalyzer {
             ))
         }
 
-        // Remove overlapping zoom regions (later cluster wins)
-        return resolveOverlaps(keyframes)
+        return mergeOverlappingZooms(keyframes, transitionDuration: transitionDuration)
     }
 
     /// Interpolate zoom state at a given timestamp using spring-like easing
     static func interpolate(keyframes: [ZoomKeyframe], at time: Double) -> (centerX: CGFloat, centerY: CGFloat, scale: CGFloat) {
         guard !keyframes.isEmpty else { return (0.5, 0.5, 1.0) }
 
-        // Before first keyframe
-        if time <= keyframes.first!.timestamp {
-            return (0.5, 0.5, 1.0)
-        }
+        if time <= keyframes.first!.timestamp { return (0.5, 0.5, 1.0) }
+        if time >= keyframes.last!.timestamp { return (0.5, 0.5, 1.0) }
 
-        // After last keyframe
-        if time >= keyframes.last!.timestamp {
-            return (0.5, 0.5, 1.0)
-        }
-
-        // Find surrounding keyframes
         for i in 0..<(keyframes.count - 1) {
             let kf0 = keyframes[i]
             let kf1 = keyframes[i + 1]
@@ -113,7 +105,6 @@ class AutoZoomAnalyzer {
     // MARK: - Private
 
     private static func smoothStep(_ t: CGFloat) -> CGFloat {
-        // Critically damped spring-like easing
         let t2 = t * t
         return t2 * (3 - 2 * t)
     }
@@ -130,9 +121,7 @@ class AutoZoomAnalyzer {
                 if timeDiff < timeThreshold && dist < distanceThreshold {
                     currentCluster.append(click)
                 } else {
-                    if !currentCluster.isEmpty {
-                        clusters.append(currentCluster)
-                    }
+                    if !currentCluster.isEmpty { clusters.append(currentCluster) }
                     currentCluster = [click]
                 }
             } else {
@@ -140,10 +129,7 @@ class AutoZoomAnalyzer {
             }
         }
 
-        if !currentCluster.isEmpty {
-            clusters.append(currentCluster)
-        }
-
+        if !currentCluster.isEmpty { clusters.append(currentCluster) }
         return clusters
     }
 
@@ -154,20 +140,41 @@ class AutoZoomAnalyzer {
         return CGPoint(x: sumX / count, y: sumY / count)
     }
 
-    private static func resolveOverlaps(_ keyframes: [ZoomKeyframe]) -> [ZoomKeyframe] {
-        // Simple approach: sort by time and remove any keyframes that overlap with previous zoom-out
+    /// Merge overlapping zoom regions — if one zoom-out overlaps the next zoom-in,
+    /// keep zoomed and smoothly pan to the new center instead.
+    private static func mergeOverlappingZooms(_ keyframes: [ZoomKeyframe], transitionDuration: Double) -> [ZoomKeyframe] {
         let sorted = keyframes.sorted { $0.timestamp < $1.timestamp }
+        guard sorted.count >= 4 else { return sorted }
 
         var result: [ZoomKeyframe] = []
-        var lastEndTime: Double = -1
+        var i = 0
 
-        for kf in sorted {
-            if kf.timestamp >= lastEndTime || kf.scale != 1.0 {
-                result.append(kf)
-                if kf.scale == 1.0 && kf.timestamp > lastEndTime {
-                    lastEndTime = kf.timestamp
+        while i < sorted.count {
+            let kf = sorted[i]
+
+            // Check if this is a zoom-out (scale going to 1.0) that overlaps the next zoom-in
+            if kf.scale == 1.0 && i + 1 < sorted.count {
+                let next = sorted[i + 1]
+                // If the next keyframe starts zooming before this zoom-out completes
+                if next.timestamp <= kf.timestamp + transitionDuration && next.scale == 1.0 {
+                    // Skip both the zoom-out and the next zoom-in — stay zoomed
+                    // Add a pan keyframe to the new center instead
+                    if i + 2 < sorted.count {
+                        let zoomedKf = sorted[i + 2]
+                        result.append(ZoomKeyframe(
+                            timestamp: kf.timestamp,
+                            centerX: zoomedKf.centerX,
+                            centerY: zoomedKf.centerY,
+                            scale: zoomedKf.scale
+                        ))
+                        i += 2 // Skip the zoom-out and zoom-in pair
+                        continue
+                    }
                 }
             }
+
+            result.append(kf)
+            i += 1
         }
 
         return result

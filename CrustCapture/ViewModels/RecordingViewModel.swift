@@ -13,6 +13,7 @@ class RecordingViewModel: ObservableObject {
     @Published var recordingDuration: TimeInterval = 0
     @Published var screenCaptureGranted = false
     @Published var hideWindowDuringRecording = true
+    @Published var cropTitleBar = true
 
     let screenCaptureService = ScreenCaptureService()
     let permissionsService = PermissionsService()
@@ -98,7 +99,8 @@ class RecordingViewModel: ObservableObject {
         guard let content = content else { return }
 
         let filter = screenCaptureService.createFilter(for: source, content: content)
-        let config = screenCaptureService.createConfiguration(for: source, frameRate: frameRate)
+        let cropTop = (cropTitleBar && !source.isDisplay) ? 52 : 0
+        let config = screenCaptureService.createConfiguration(for: source, frameRate: frameRate, cropTopPixels: cropTop)
 
         let urls = RecordingSession.newRecordingURLs()
 

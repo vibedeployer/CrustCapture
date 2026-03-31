@@ -188,6 +188,20 @@ struct RecordingSetupView: View {
                 }
                 .toggleStyle(.switch)
                 .controlSize(.small)
+
+                Divider()
+                    .frame(height: 20)
+
+                // Crop title bar
+                Toggle(isOn: $viewModel.cropTitleBar) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "crop")
+                            .foregroundStyle(viewModel.cropTitleBar ? Color.accentColor : Color.secondary)
+                        Text("Crop Title Bar")
+                    }
+                }
+                .toggleStyle(.switch)
+                .controlSize(.small)
             }
             .padding(16)
             .background(

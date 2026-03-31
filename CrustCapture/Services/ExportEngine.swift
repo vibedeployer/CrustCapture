@@ -226,20 +226,24 @@ class ExportEngine: ObservableObject {
         let videoQueue = DispatchQueue(label: "com.crustcapture.export.video")
         group.enter()
         var frameCount = 0
+        var videoDone = false
 
         writerVideoInput.requestMediaDataWhenReady(on: videoQueue) { [weak self] in
-            guard let self = self else { return }
+            guard let self = self, !videoDone, reader.status == .reading else { return }
 
-            while writerVideoInput.isReadyForMoreMediaData {
-                if self.cancelled {
+            while writerVideoInput.isReadyForMoreMediaData && !videoDone {
+                if self.cancelled || reader.status != .reading {
+                    guard !videoDone else { return }
+                    videoDone = true
                     writerVideoInput.markAsFinished()
                     group.leave()
                     return
                 }
 
                 guard let sampleBuffer = videoReaderOutput.copyNextSampleBuffer() else {
-                    // No more frames
+                    guard !videoDone else { return }
                     exportLog("[Export] Video done. \(frameCount) frames.")
+                    videoDone = true
                     writerVideoInput.markAsFinished()
                     group.leave()
                     return
@@ -293,19 +297,24 @@ class ExportEngine: ObservableObject {
         if let audioOutput = audioReaderOutput, let audioInput = writerAudioInput {
             let audioQueue = DispatchQueue(label: "com.crustcapture.export.audio")
             group.enter()
+            var audioDone = false
 
             audioInput.requestMediaDataWhenReady(on: audioQueue) { [weak self] in
-                guard let self = self else { return }
+                guard let self = self, !audioDone, reader.status == .reading else { return }
 
-                while audioInput.isReadyForMoreMediaData {
-                    if self.cancelled {
+                while audioInput.isReadyForMoreMediaData && !audioDone {
+                    if self.cancelled || reader.status != .reading {
+                        guard !audioDone else { return }
+                        audioDone = true
                         audioInput.markAsFinished()
                         group.leave()
                         return
                     }
 
                     guard let audioBuffer = audioOutput.copyNextSampleBuffer() else {
+                        guard !audioDone else { return }
                         exportLog("[Export] Audio done.")
+                        audioDone = true
                         audioInput.markAsFinished()
                         group.leave()
                         return

@@ -96,7 +96,7 @@ class ScreenCaptureService: ObservableObject {
         fatalError("CaptureSource has neither display nor window")
     }
 
-    func createConfiguration(for source: CaptureSource, frameRate: Int = 60) -> SCStreamConfiguration {
+    func createConfiguration(for source: CaptureSource, frameRate: Int = 60, cropTopPixels: Int = 0) -> SCStreamConfiguration {
         let config = SCStreamConfiguration()
 
         let scaleFactor: CGFloat
@@ -108,8 +108,23 @@ class ScreenCaptureService: ObservableObject {
             scaleFactor = NSScreen.main?.backingScaleFactor ?? 2.0
         }
 
-        config.width = Int(source.frame.width * scaleFactor)
-        config.height = Int(source.frame.height * scaleFactor)
+        let cropTop = CGFloat(cropTopPixels)
+        let captureWidth = source.frame.width
+        let captureHeight = source.frame.height - cropTop
+
+        config.width = Int(captureWidth * scaleFactor)
+        config.height = Int(captureHeight * scaleFactor)
+
+        // Crop the top of the window (title bar, browser tabs, etc.)
+        if cropTopPixels > 0 && !source.isDisplay {
+            config.sourceRect = CGRect(
+                x: 0,
+                y: cropTop,
+                width: captureWidth,
+                height: captureHeight
+            )
+        }
+
         config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(frameRate))
         config.pixelFormat = kCVPixelFormatType_32BGRA
         config.showsCursor = true
