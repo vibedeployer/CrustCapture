@@ -134,59 +134,12 @@
             border-radius: 12px;
             overflow: hidden;
             border: 1px solid var(--border);
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            aspect-ratio: 16 / 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            background: var(--surface);
         }
-        .preview-window {
-            width: 70%;
-            aspect-ratio: 16 / 10;
-            background: #1a1a2e;
-            border-radius: 8px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            position: relative;
-            overflow: hidden;
-        }
-        .preview-titlebar {
-            height: 28px;
-            background: #252538;
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            gap: 6px;
-        }
-        .dot { width: 10px; height: 10px; border-radius: 50%; }
-        .dot-red { background: #ff5f57; }
-        .dot-yellow { background: #ffbd2e; }
-        .dot-green { background: #28c840; }
-        .preview-content {
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .preview-line {
-            height: 8px;
-            border-radius: 4px;
-            background: #2a2a44;
-        }
-        .zoom-circle {
-            position: absolute;
-            width: 80px;
-            height: 80px;
-            border: 2px solid var(--accent);
-            border-radius: 50%;
-            bottom: 25%;
-            right: 20%;
-            animation: pulse 2s ease-in-out infinite;
-            opacity: 0.7;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.15); opacity: 0.9; }
+        .preview video {
+            width: 100%;
+            display: block;
+            border-radius: 12px;
         }
 
         /* Features */
@@ -378,21 +331,9 @@
             </div>
 
             <div class="preview">
-                <div class="preview-window">
-                    <div class="preview-titlebar">
-                        <div class="dot dot-red"></div>
-                        <div class="dot dot-yellow"></div>
-                        <div class="dot dot-green"></div>
-                    </div>
-                    <div class="preview-content">
-                        <div class="preview-line" style="width: 60%"></div>
-                        <div class="preview-line" style="width: 80%"></div>
-                        <div class="preview-line" style="width: 45%"></div>
-                        <div class="preview-line" style="width: 70%"></div>
-                        <div class="preview-line" style="width: 55%"></div>
-                    </div>
-                    <div class="zoom-circle"></div>
-                </div>
+                <video autoplay loop muted playsinline>
+                    <source src="CrustCaptureExample.mp4" type="video/mp4">
+                </video>
             </div>
         </div>
     </section>
