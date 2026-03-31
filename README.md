@@ -65,4 +65,4 @@ xcodebuild -scheme CrustCapture -configuration Release build
 
 ## License
 
-Copyright 2026 MoonCrust Games. All rights reserved.
+[MIT License](LICENSE)
