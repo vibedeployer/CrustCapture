@@ -38,7 +38,7 @@ struct EffectSettings: Equatable {
         Color(red: 0.2, green: 0.5, blue: 0.8),
         135
     )
-    var cornerRadius: CGFloat = 12
+    var cornerRadius: CGFloat = 10
     var shadowRadius: CGFloat = 20
     var shadowOpacity: Double = 0.5
     var padding: CGFloat = 40

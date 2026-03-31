@@ -320,7 +320,29 @@ class ExportEngine: ObservableObject {
                         return
                     }
 
-                    audioInput.append(audioBuffer)
+                    // Offset audio timestamps to start at zero (matching video)
+                    let audioPTS = CMSampleBufferGetPresentationTimeStamp(audioBuffer)
+                    let offsetPTS = CMTimeSubtract(audioPTS, trimStart)
+
+                    var timingInfo = CMSampleTimingInfo(
+                        duration: CMSampleBufferGetDuration(audioBuffer),
+                        presentationTimeStamp: offsetPTS,
+                        decodeTimeStamp: .invalid
+                    )
+                    var offsetBuffer: CMSampleBuffer?
+                    CMSampleBufferCreateCopyWithNewTiming(
+                        allocator: nil,
+                        sampleBuffer: audioBuffer,
+                        sampleTimingEntryCount: 1,
+                        sampleTimingArray: &timingInfo,
+                        sampleBufferOut: &offsetBuffer
+                    )
+
+                    if let buffer = offsetBuffer {
+                        audioInput.append(buffer)
+                    } else {
+                        audioInput.append(audioBuffer)
+                    }
                 }
             }
         }

@@ -67,8 +67,9 @@ class CompositorPipeline {
         let offsetY = contentRect.origin.y + (contentRect.height - scaledHeight) / 2
         processedFrame = processedFrame.transformed(by: CGAffineTransform(translationX: offsetX, y: offsetY))
 
-        // Step 3: Apply rounded corners
-        if cornerRadius > 0 {
+        // Step 3: Apply rounded corners (only if larger than native macOS window corners)
+        let nativeCornerRadius: CGFloat = 10 * scale
+        if cornerRadius > 0 && (cornerRadius * scale) > nativeCornerRadius {
             let roundedRect = CGRect(x: offsetX, y: offsetY, width: scaledWidth, height: scaledHeight)
             processedFrame = applyRoundedCorners(to: processedFrame, rect: roundedRect, radius: cornerRadius * scale)
         }
@@ -76,20 +77,26 @@ class CompositorPipeline {
         // Step 4: Create background
         let background = createBackground(style: settings.background, size: outputSize)
 
-        // Step 5: Add shadow
+        // Step 5: Add shadow (use a solid shape for shadow, not the frame with holes from native corners)
         var composited: CIImage
         if settings.shadowRadius > 0 {
-            let shadow = processedFrame.applyingFilter("CIGaussianBlur", parameters: [
-                kCIInputRadiusKey: settings.shadowRadius
-            ]).cropped(to: CGRect(origin: .zero, size: outputSize))
-                .applyingFilter("CIColorMatrix", parameters: [
-                    "inputRVector": CIVector(x: 0, y: 0, z: 0, w: 0),
-                    "inputGVector": CIVector(x: 0, y: 0, z: 0, w: 0),
-                    "inputBVector": CIVector(x: 0, y: 0, z: 0, w: 0),
-                    "inputAVector": CIVector(x: 0, y: 0, z: 0, w: CGFloat(settings.shadowOpacity))
+            // Create a solid rounded rect for the shadow shape
+            let shadowRect = CGRect(x: offsetX, y: offsetY, width: scaledWidth, height: scaledHeight)
+            let shadowRadius = max(cornerRadius * scale, nativeCornerRadius)
+            let shadowShape = CIImage(color: CIColor(red: 0, green: 0, blue: 0, alpha: CGFloat(settings.shadowOpacity)))
+                .cropped(to: shadowRect)
+                .applyingFilter("CIRoundedRectangleGenerator", parameters: [
+                    "inputRadius": shadowRadius,
+                    "inputExtent": CIVector(cgRect: shadowRect),
+                    "inputColor": CIColor(red: 0, green: 0, blue: 0, alpha: CGFloat(settings.shadowOpacity))
                 ])
+                .cropped(to: shadowRect)
+                .applyingFilter("CIGaussianBlur", parameters: [
+                    kCIInputRadiusKey: settings.shadowRadius
+                ])
+                .cropped(to: CGRect(origin: .zero, size: outputSize))
 
-            composited = shadow.composited(over: background)
+            composited = shadowShape.composited(over: background)
             composited = processedFrame.composited(over: composited)
         } else {
             composited = processedFrame.composited(over: background)
