@@ -2,7 +2,7 @@
 
 A professional macOS screen recording app with automatic zoom-on-click, cursor tracking, and beautiful export effects.
 
-Built by [MoonCrust Games](https://github.com/vibedeployer).
+Built by [vibedeployer](https://github.com/vibedeployer).
 
 ## Features
 
