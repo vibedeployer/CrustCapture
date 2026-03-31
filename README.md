@@ -2,7 +2,7 @@
 
 A professional macOS screen recording app with automatic zoom-on-click, cursor tracking, and beautiful export effects.
 
-Built by [MoonCrust Games](https://github.com/mooncrustgames).
+Built by [MoonCrust Games](https://github.com/vibedeployer).
 
 ## Features
 
@@ -51,7 +51,7 @@ Built by [MoonCrust Games](https://github.com/mooncrustgames).
 
 ### Build from Source
 ```bash
-git clone https://github.com/mooncrustgames/CrustCapture.git
+git clone https://github.com/vibedeployer/CrustCapture.git
 cd CrustCapture
 xcodebuild -scheme CrustCapture -configuration Release build
 ```
