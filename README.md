@@ -1,5 +1,8 @@
 # CrustCapture
 
+<img width="985" height="744" alt="Screenshot 2026-03-31 at 21 50 43" src="https://github.com/user-attachments/assets/33f65b57-fb05-419c-aada-41a1d92ba6d9" />
+
+
 A professional macOS screen recording app with automatic zoom-on-click, cursor tracking, and beautiful export effects.
 
 Built by [vibedeployer](https://github.com/vibedeployer).
