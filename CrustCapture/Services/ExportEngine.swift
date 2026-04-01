@@ -108,6 +108,9 @@ class ExportEngine: ObservableObject {
 
         let compositor = CompositorPipeline()
 
+        // Smoothed cursor trajectory
+        let cursorSmoother = CursorSmoother(events: cursorEvents)
+
         // Zoom keyframes
         let zoomKeyframes: [ZoomKeyframe]
         if settings.autoZoomEnabled {
@@ -162,13 +165,11 @@ class ExportEngine: ObservableObject {
         reader.timeRange = CMTimeRange(start: trimStart, end: trimEnd)
 
         // Output dimensions
-        let padding = settings.padding
-        let rawWidth = CGFloat(recordingWidth) + padding * 2
-        let rawHeight = CGFloat(recordingHeight) + padding * 2
-        let capWidth = maxWidth > 0 ? CGFloat(maxWidth) : rawWidth
-        let scale = rawWidth > capWidth ? capWidth / rawWidth : 1.0
-        let finalWidth = Int(rawWidth * scale) & ~1
-        let finalHeight = Int(rawHeight * scale) & ~1
+        let rawSize = settings.outputSize(recordingWidth: CGFloat(recordingWidth), recordingHeight: CGFloat(recordingHeight))
+        let capWidth = maxWidth > 0 ? CGFloat(maxWidth) : rawSize.width
+        let scale = rawSize.width > capWidth ? capWidth / rawSize.width : 1.0
+        let finalWidth = Int(rawSize.width * scale) & ~1
+        let finalHeight = Int(rawSize.height * scale) & ~1
         let outputSize = CGSize(width: finalWidth, height: finalHeight)
 
         // Remove existing file
@@ -252,7 +253,8 @@ class ExportEngine: ObservableObject {
                 let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
                 let timeSeconds = CMTimeGetSeconds(pts) + trimStartSeconds
 
-                let cursorPos = ExportEngine.findCursorPosition(in: cursorEvents, at: timeSeconds)
+                let cursorPos = cursorSmoother.position(at: timeSeconds)
+                    ?? ExportEngine.findCursorPosition(in: cursorEvents, at: timeSeconds)
                 let clickState = ExportEngine.findClickState(in: cursorEvents, at: timeSeconds)
                 let zoomState = AutoZoomAnalyzer.interpolate(keyframes: zoomKeyframes, at: timeSeconds)
 

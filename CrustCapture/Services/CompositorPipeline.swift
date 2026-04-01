@@ -34,13 +34,17 @@ class CompositorPipeline {
     ) -> CIImage {
         let padding = settings.padding
         let cornerRadius = settings.cornerRadius
+        let isCropped = settings.outputAspectRatio != .auto
+
+        // For cropped ratios, use minimal padding so the recording fills the frame
+        let effectivePadding = isCropped ? min(padding, 16) : padding
 
         // The recording fills the output minus padding
         let contentRect = CGRect(
-            x: padding,
-            y: padding,
-            width: outputSize.width - padding * 2,
-            height: outputSize.height - padding * 2
+            x: effectivePadding,
+            y: effectivePadding,
+            width: outputSize.width - effectivePadding * 2,
+            height: outputSize.height - effectivePadding * 2
         )
 
         // Step 1: Apply zoom crop to the raw frame
@@ -54,13 +58,14 @@ class CompositorPipeline {
             )
         }
 
-        // Step 2: Scale frame to fit content rect
+        // Step 2: Scale frame to fill content rect
         let scaleX = contentRect.width / processedFrame.extent.width
         let scaleY = contentRect.height / processedFrame.extent.height
-        let scale = min(scaleX, scaleY)
+        // Auto: fit inside (letterbox). Cropped ratios: fill and overflow (cover)
+        let scale = isCropped ? max(scaleX, scaleY) : min(scaleX, scaleY)
         processedFrame = processedFrame.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
 
-        // Center in content rect
+        // Center in content rect (overflowing parts get clipped at the end)
         let scaledWidth = processedFrame.extent.width
         let scaledHeight = processedFrame.extent.height
         let offsetX = contentRect.origin.x + (contentRect.width - scaledWidth) / 2

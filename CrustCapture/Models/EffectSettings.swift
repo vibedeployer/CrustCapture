@@ -41,6 +41,25 @@ struct CRTSettings: Equatable {
     var flicker: Bool = true              // subtle brightness variation
 }
 
+enum OutputAspectRatio: String, CaseIterable, Equatable {
+    case auto = "Auto"
+    case landscape = "16:9"
+    case portrait = "9:16"
+    case square = "1:1"
+    case ultrawide = "21:9"
+
+    /// Returns (width, height) ratio
+    var ratio: (CGFloat, CGFloat)? {
+        switch self {
+        case .auto: return nil
+        case .landscape: return (16, 9)
+        case .portrait: return (9, 16)
+        case .square: return (1, 1)
+        case .ultrawide: return (21, 9)
+        }
+    }
+}
+
 struct EffectSettings: Equatable {
     var background: BackgroundStyle = .gradient(
         Color(red: 0.1, green: 0.1, blue: 0.3),
@@ -55,4 +74,28 @@ struct EffectSettings: Equatable {
     var autoZoomEnabled: Bool = true
     var autoZoomScale: CGFloat = 2.0
     var crt: CRTSettings = CRTSettings()
+    var outputAspectRatio: OutputAspectRatio = .auto
+
+    /// Computes the output canvas size for a given recording size.
+    /// Non-auto ratios keep the recording large and crop to the target aspect ratio,
+    /// so the content overflows rather than shrinking into a huge background.
+    func outputSize(recordingWidth: CGFloat, recordingHeight: CGFloat) -> CGSize {
+        let autoWidth = recordingWidth + padding * 2
+        let autoHeight = recordingHeight + padding * 2
+
+        guard let (rw, rh) = outputAspectRatio.ratio else {
+            return CGSize(width: autoWidth, height: autoHeight)
+        }
+
+        let targetRatio = rw / rh
+        let autoRatio = autoWidth / autoHeight
+
+        if targetRatio > autoRatio {
+            // Target is wider than auto — keep width, shrink height
+            return CGSize(width: autoWidth, height: autoWidth / targetRatio)
+        } else {
+            // Target is taller than auto — keep height, shrink width
+            return CGSize(width: autoHeight * targetRatio, height: autoHeight)
+        }
+    }
 }

@@ -13,6 +13,7 @@ class EditorViewModel: ObservableObject {
     private var displayLink: CVDisplayLink?
     private var compositor = CompositorPipeline()
     private var zoomKeyframes: [ZoomKeyframe] = []
+    private var cursorSmoother: CursorSmoother?
 
     private var imageGenerator: AVAssetImageGenerator?
     private var project: Project?
@@ -25,6 +26,9 @@ class EditorViewModel: ObservableObject {
         imageGenerator = AVAssetImageGenerator(asset: asset)
         imageGenerator?.appliesPreferredTrackTransform = true
         imageGenerator?.maximumSize = CGSize(width: 1920, height: 1080)
+
+        // Build smoothed cursor trajectory
+        cursorSmoother = CursorSmoother(events: project.cursorEvents)
 
         // Generate zoom keyframes
         if project.effectSettings.autoZoomEnabled {
@@ -66,6 +70,7 @@ class EditorViewModel: ObservableObject {
         // Capture all needed values on the main actor before detaching
         let settings = project.effectSettings
         let cursorEvents = project.cursorEvents
+        let cursorSmoother = self.cursorSmoother
         let recordingWidth = CGFloat(project.recording.width)
         let recordingHeight = CGFloat(project.recording.height)
 
@@ -73,14 +78,11 @@ class EditorViewModel: ObservableObject {
             guard let cgImage = try? generator.copyCGImage(at: cmTime, actualTime: nil) else { return }
 
             let ciImage = CIImage(cgImage: cgImage)
-            let padding = settings.padding
+            let outputSize = settings.outputSize(recordingWidth: recordingWidth, recordingHeight: recordingHeight)
 
-            let outputWidth = recordingWidth + padding * 2
-            let outputHeight = recordingHeight + padding * 2
-            let outputSize = CGSize(width: outputWidth, height: outputHeight)
-
-            // Get cursor state
-            let cursorPos = EditorViewModel.findCursorPosition(in: cursorEvents, at: currentTime)
+            // Get cursor state — use smoothed position
+            let cursorPos = cursorSmoother?.position(at: currentTime)
+                ?? EditorViewModel.findCursorPosition(in: cursorEvents, at: currentTime)
             let clickState = EditorViewModel.findClickState(in: cursorEvents, at: currentTime)
             let zoomState = AutoZoomAnalyzer.interpolate(keyframes: zoomKeyframes, at: currentTime)
 

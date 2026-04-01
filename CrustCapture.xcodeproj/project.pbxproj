@@ -31,6 +31,7 @@
 		AA000022 /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000022; };
 		AA000023 /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000023; };
 		AA000024 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AB000024; };
+		AA000030 /* CursorSmoother.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000030; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,6 +49,7 @@
 		AB000012 /* CompositorPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompositorPipeline.swift; sourceTree = "<group>"; };
 		AB000013 /* AutoZoomAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoZoomAnalyzer.swift; sourceTree = "<group>"; };
 		AB000014 /* ExportEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportEngine.swift; sourceTree = "<group>"; };
+		AB000030 /* CursorSmoother.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorSmoother.swift; sourceTree = "<group>"; };
 		AB000015 /* RecordingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingViewModel.swift; sourceTree = "<group>"; };
 		AB000016 /* EditorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorViewModel.swift; sourceTree = "<group>"; };
 		AB000017 /* ExportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportViewModel.swift; sourceTree = "<group>"; };
@@ -127,6 +129,7 @@
 				AB000012 /* CompositorPipeline.swift */,
 				AB000013 /* AutoZoomAnalyzer.swift */,
 				AB000014 /* ExportEngine.swift */,
+				AB000030 /* CursorSmoother.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -287,6 +290,7 @@
 				AA000021 /* EditorView.swift in Sources */,
 				AA000022 /* InspectorView.swift in Sources */,
 				AA000023 /* ExportView.swift in Sources */,
+				AA000030 /* CursorSmoother.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

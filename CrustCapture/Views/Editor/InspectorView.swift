@@ -7,6 +7,38 @@ struct InspectorView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // Output section
+                inspectorSection("Output") {
+                    HStack(spacing: 4) {
+                        ForEach(OutputAspectRatio.allCases, id: \.self) { ratio in
+                            let isActive = settings.outputAspectRatio == ratio
+                            VStack(spacing: 4) {
+                                aspectRatioIcon(ratio)
+                                    .frame(width: 28, height: 28)
+                                Text(ratio.rawValue)
+                                    .font(.system(size: 10, weight: isActive ? .semibold : .regular))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .contentShape(Rectangle())
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(isActive ? Color.accentColor.opacity(0.2) : Color.primary.opacity(0.05))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(isActive ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                            )
+                            .onTapGesture {
+                                settings.outputAspectRatio = ratio
+                                onSettingsChanged()
+                            }
+                        }
+                    }
+                }
+
+                Divider()
+
                 // Background section
                 inspectorSection("Background") {
                     backgroundPicker
@@ -223,6 +255,22 @@ struct InspectorView: View {
 
             content()
         }
+    }
+
+    @ViewBuilder
+    private func aspectRatioIcon(_ ratio: OutputAspectRatio) -> some View {
+        let size: (CGFloat, CGFloat) = {
+            switch ratio {
+            case .auto: return (22, 14)
+            case .landscape: return (24, 14)
+            case .portrait: return (14, 24)
+            case .square: return (20, 20)
+            case .ultrawide: return (26, 11)
+            }
+        }()
+        RoundedRectangle(cornerRadius: 2)
+            .stroke(Color.primary.opacity(0.6), lineWidth: 1.5)
+            .frame(width: size.0, height: size.1)
     }
 
     private func sliderRow(_ label: String, value: Binding<CGFloat>, range: ClosedRange<CGFloat>, onChange: @escaping () -> Void) -> some View {

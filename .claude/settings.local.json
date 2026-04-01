@@ -12,7 +12,8 @@
       "Bash(rm -rf /Applications/CrustCapture.app)",
       "Bash(cp -R /Users/vibedeploy/Library/Developer/Xcode/DerivedData/CrustCapture-eprutvrvvmpivpbbwxqoqizrgmml/Build/Products/Debug/CrustCapture.app /Applications/CrustCapture.app)",
       "Bash(open /Applications/CrustCapture.app)",
-      "Bash(cp -R /Users/vibedeploy/Library/Developer/Xcode/DerivedData/CrustCapture-*/Build/Products/Debug/CrustCapture.app /Applications/CrustCapture.app)"
+      "Bash(cp -R /Users/vibedeploy/Library/Developer/Xcode/DerivedData/CrustCapture-*/Build/Products/Debug/CrustCapture.app /Applications/CrustCapture.app)",
+      "WebFetch(domain:screen.studio)"
     ]
   }
 }
